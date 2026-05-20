@@ -6,8 +6,8 @@ interface Props {
 
 const SEGMENTS = [
   { label: "1일차", color: "var(--day-1)", time: "06:00", index: 0 },
-  { label: "2일차", color: "var(--day-2)", time: "14:00", index: 1 },
-  { label: "3일차", color: "var(--day-3)", time: "22:00", index: 2 },
+  { label: "2일차", color: "var(--day-2)", time: "12:00", index: 1 },
+  { label: "3일차", color: "var(--day-3)", time: "18:00", index: 2 },
 ];
 
 export default function ConceptIntro({ onNext }: Props) {
@@ -95,7 +95,7 @@ export default function ConceptIntro({ onNext }: Props) {
             className="text-[15px] leading-[1.6] stagger stagger-4"
             style={{ color: "var(--text-2)" }}
           >
-            8시간마다 새 하루가 시작됩니다.
+            6시간마다 새 하루가 시작됩니다.
           </p>
           <p
             className="text-[13px] leading-[1.6] stagger stagger-5"

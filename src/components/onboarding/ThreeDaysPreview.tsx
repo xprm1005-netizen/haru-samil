@@ -13,8 +13,8 @@ const DAY_ROLES = ["시작하는 나", "실행하는 나", "마무리하는 나"
 export default function ThreeDaysPreview({ startTime, onNext }: Props) {
   const parts = [1, 2, 3].map((i) => ({
     label: `${i}일차`,
-    start: addHours(startTime, (i - 1) * 8),
-    end: addHours(startTime, i * 8),
+    start: addHours(startTime, (i - 1) * 6),
+    end: addHours(startTime, i * 6),
     role: DAY_ROLES[i - 1],
     color: DAY_COLORS[i - 1],
   }));
@@ -36,7 +36,7 @@ export default function ThreeDaysPreview({ startTime, onNext }: Props) {
             오늘의 3일
           </h2>
           <p className="text-[14px]" style={{ color: "var(--text-2)" }}>
-            {startTime}부터 8시간씩 나뉩니다.
+            {startTime}부터 6시간씩 나뉩니다.
           </p>
         </div>
 

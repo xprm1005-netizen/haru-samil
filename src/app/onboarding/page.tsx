@@ -24,7 +24,13 @@ export default function OnboardingPage() {
   const [startTime, setStartTime] = useState("06:00");
   const [lifestyle, setLifestyle] = useState("");
   const completeOnboardingWithAiPlan = useHaruSamilStore((s) => s.completeOnboardingWithAiPlan);
+  const completeOnboarding = useHaruSamilStore((s) => s.completeOnboarding);
   const router = useRouter();
+
+  const handleSkip = () => {
+    completeOnboarding(startTime, "");
+    router.push("/");
+  };
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -97,6 +103,7 @@ export default function OnboardingPage() {
           {step === "lifestyle" && (
             <LifestyleSetup
               onNext={(ls) => { setLifestyle(ls); setStep("aiResult"); }}
+              onSkip={handleSkip}
             />
           )}
           {step === "aiResult" && (
@@ -107,6 +114,7 @@ export default function OnboardingPage() {
                 completeOnboardingWithAiPlan(startTime, plans);
                 router.push("/");
               }}
+              onSkip={handleSkip}
             />
           )}
         </div>

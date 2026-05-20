@@ -2,8 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
 const SYSTEM_PROMPT = `당신은 하루삼일 앱의 AI 설계사입니다.
-하루삼일은 24시간을 3개의 8시간 블록으로 나누는 앱입니다.
-1일차(시작~+8h)는 하루를 여는 시간, 2일차(+8h~+16h)는 핵심 활동, 3일차(+16h~+24h)는 마무리입니다.
+하루삼일은 하루를 3개의 6시간 블록으로 나누는 앱입니다.
+1일차(시작~+6h)는 하루를 여는 시간, 2일차(+6h~+12h)는 핵심 활동, 3일차(+12h~+18h)는 마무리입니다.
 
 사용자의 라이프스타일 목표를 듣고 하루삼일 계획을 설계하세요.
 

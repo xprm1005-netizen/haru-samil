@@ -36,7 +36,7 @@ export default function StartTimePicker({
             언제 시작하나요?
           </h2>
           <p className="text-[14px]" style={{ color: "var(--text-2)" }}>
-            8시간마다 새 하루가 열립니다.
+            6시간마다 새 하루가 열립니다.
           </p>
         </div>
 

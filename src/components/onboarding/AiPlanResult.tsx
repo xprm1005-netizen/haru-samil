@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { DayIndex } from "@/types";
-import { addHours } from "@/lib/time/formatTimeRange";
 
 interface DayPlanItem {
   index: DayIndex;
@@ -14,6 +13,7 @@ interface Props {
   lifestyle: string;
   startTime: string;
   onConfirm: (plans: DayPlanItem[]) => void;
+  onSkip: () => void;
 }
 
 const DAY_COLORS: Record<DayIndex, string> = {
@@ -22,7 +22,7 @@ const DAY_COLORS: Record<DayIndex, string> = {
   3: "var(--day-3)",
 };
 
-export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props) {
+export default function AiPlanResult({ lifestyle, startTime, onConfirm, onSkip }: Props) {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<DayPlanItem[]>([]);
   const [message, setMessage] = useState("");
@@ -49,12 +49,6 @@ export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props)
     fetch();
   }, [lifestyle, startTime]);
 
-  const getTimeRange = (index: DayIndex) => {
-    const start = addHours(startTime, (index - 1) * 8);
-    const end = addHours(startTime, index * 8);
-    return `${start} — ${end}`;
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-8 px-6">
@@ -66,7 +60,6 @@ export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props)
             AI 설계 중
           </span>
 
-          {/* pulse dots */}
           <div className="flex gap-2">
             {[0, 1, 2].map((i) => (
               <div
@@ -142,14 +135,11 @@ export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props)
                   borderBottom: i < plans.length - 1 ? "1px solid var(--line)" : undefined,
                 }}
               >
-                {/* day header */}
+                {/* day header — no time range */}
                 <div className="flex items-center gap-2.5">
                   <div className="w-[6px] h-[6px] rounded-full" style={{ backgroundColor: color }} />
                   <span className="text-[14px] font-semibold" style={{ color: "var(--text)" }}>
                     {plan.index}일차
-                  </span>
-                  <span className="mono text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {getTimeRange(plan.index)}
                   </span>
                 </div>
 
@@ -193,7 +183,7 @@ export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props)
       </div>
 
       {/* CTA */}
-      <div className="pt-6">
+      <div className="pt-6 flex flex-col gap-3">
         <button
           onClick={() => onConfirm(plans)}
           className="w-full h-[52px] font-semibold tracking-wide transition-opacity active:opacity-70"
@@ -205,6 +195,18 @@ export default function AiPlanResult({ lifestyle, startTime, onConfirm }: Props)
           }}
         >
           이 계획으로 시작하기
+        </button>
+        <button
+          onClick={onSkip}
+          className="w-full h-[44px] font-medium transition-opacity active:opacity-50"
+          style={{
+            color: "var(--text-3)",
+            border: "1px solid var(--line)",
+            borderRadius: "4px",
+            fontSize: "14px",
+          }}
+        >
+          사용 안함
         </button>
       </div>
     </div>

@@ -86,8 +86,8 @@ export default function SettingsPage() {
 
   const parts = [1, 2, 3].map((i) => ({
     label: `${i}일차`,
-    start: addHours(`${hour}:${minute}`, (i - 1) * 8),
-    end: addHours(`${hour}:${minute}`, i * 8),
+    start: addHours(`${hour}:${minute}`, (i - 1) * 6),
+    end: addHours(`${hour}:${minute}`, i * 6),
   }));
 
   return (

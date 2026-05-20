@@ -13,8 +13,8 @@ export function createDailyCycle(
   roles: Record<DayIndex, string> = DEFAULT_ROLES
 ): DailyCycle {
   const parts: DayPart[] = ([1, 2, 3] as DayIndex[]).map((index) => {
-    const start = addHours(startTime, (index - 1) * 8);
-    const end = addHours(startTime, index * 8);
+    const start = addHours(startTime, (index - 1) * 6);
+    const end = addHours(startTime, index * 6);
     return {
       index,
       label: `${index}일차`,

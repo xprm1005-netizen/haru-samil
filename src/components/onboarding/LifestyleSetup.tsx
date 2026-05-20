@@ -4,12 +4,12 @@ import { useState } from "react";
 
 interface Props {
   onNext: (lifestyle: string) => void;
+  onSkip: () => void;
 }
 
 const PRESETS = [
   {
     label: "오늘의 에너지 충전하기",
-    analyzingLabel: "에너지 충전",
     value: "활기차고 에너지 넘치는 하루. 운동, 생산적 활동, 자기계발.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -19,7 +19,6 @@ const PRESETS = [
   },
   {
     label: "나만의 온전한 휴식 설계",
-    analyzingLabel: "휴식 설계",
     value: "충분한 휴식과 재충전. 수면, 취미, 심신 안정.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -29,7 +28,6 @@ const PRESETS = [
   },
   {
     label: "업무 몰입과 전문성 강화",
-    analyzingLabel: "업무 몰입",
     value: "업무 집중과 전문성 향상. 핵심 업무, 학습, 커리어 성장.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +39,6 @@ const PRESETS = [
   },
   {
     label: "지속 가능한 건강 루틴",
-    analyzingLabel: "건강 루틴",
     value: "건강한 생활 습관. 운동, 식단 관리, 충분한 수면.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -51,23 +48,15 @@ const PRESETS = [
   },
 ];
 
-export default function LifestyleSetup({ onNext }: Props) {
+export default function LifestyleSetup({ onNext, onSkip }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [isCustom, setIsCustom] = useState(false);
   const [customText, setCustomText] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzingLabel, setAnalyzingLabel] = useState("");
 
-  const startAnalysis = (value: string, label: string) => {
-    setAnalyzingLabel(label);
-    setAnalyzing(true);
-    setTimeout(() => onNext(value), 1500);
-  };
-
-  const handleSelect = (value: string, label: string) => {
+  const handleSelect = (value: string) => {
     setSelected(value);
     setIsCustom(false);
-    startAnalysis(value, label);
+    onNext(value);
   };
 
   const handleCustomToggle = () => {
@@ -77,48 +66,8 @@ export default function LifestyleSetup({ onNext }: Props) {
 
   const handleNext = () => {
     if (!customText.trim()) return;
-    startAnalysis(customText.trim(), "라이프스타일");
+    onNext(customText.trim());
   };
-
-  if (analyzing) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-8 px-6 fade-in">
-        <div className="flex flex-col items-center gap-6">
-          <span
-            className="mono text-[11px] tracking-[0.22em] uppercase"
-            style={{ color: "var(--text-3)" }}
-          >
-            AI 분석중
-          </span>
-
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: "var(--text-3)",
-                  animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                }}
-              />
-            ))}
-          </div>
-
-          <div className="text-center flex flex-col gap-1.5">
-            <p className="text-[17px] leading-[1.7]" style={{ color: "var(--text-3)" }}>
-              AI가 사용자의
-            </p>
-            <p className="text-[20px] font-bold tracking-tight" style={{ color: "var(--text)" }}>
-              [{analyzingLabel}]
-            </p>
-            <p className="text-[17px] leading-[1.7]" style={{ color: "var(--text-3)" }}>
-              데이터를 분석중입니다...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col justify-between h-full px-6 py-14">
@@ -126,12 +75,24 @@ export default function LifestyleSetup({ onNext }: Props) {
 
         {/* header */}
         <div className="flex flex-col gap-3">
-          <span
-            className="mono text-[11px] tracking-[0.22em] uppercase"
-            style={{ color: "var(--text-3)" }}
-          >
-            AI 설계
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="mono text-[11px] tracking-[0.22em] uppercase"
+              style={{ color: "var(--text-3)" }}
+            >
+              AI 설계
+            </span>
+            <span
+              className="mono text-[9px] tracking-[0.08em] px-1.5 py-0.5"
+              style={{
+                border: "1px solid var(--text-3)",
+                color: "var(--text-3)",
+                borderRadius: "2px",
+              }}
+            >
+              AI
+            </span>
+          </div>
           <h1
             className="text-[26px] font-bold leading-[1.2] tracking-tight"
             style={{ color: "var(--text)" }}
@@ -151,7 +112,7 @@ export default function LifestyleSetup({ onNext }: Props) {
             return (
               <button
                 key={preset.value}
-                onClick={() => handleSelect(preset.value, preset.analyzingLabel)}
+                onClick={() => handleSelect(preset.value)}
                 className="w-full text-left px-4 font-medium transition-all duration-150 active:opacity-70"
                 style={{
                   height: "58px",
@@ -217,16 +178,37 @@ export default function LifestyleSetup({ onNext }: Props) {
               </span>
             </div>
           )}
+
+          {/* skip option */}
+          <button
+            onClick={onSkip}
+            className="w-full h-[44px] text-left px-4 transition-opacity active:opacity-50"
+            style={{
+              borderRadius: "4px",
+              border: "1px solid var(--line)",
+              color: "var(--text-3)",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+            사용 안함
+          </button>
         </div>
 
       </div>
 
-      {/* CTA — only shown for custom input */}
+      {/* CTA — custom input only */}
       {isCustom && (
         <button
           onClick={handleNext}
           disabled={!customText.trim()}
-          className="w-full h-[52px] font-semibold tracking-wide transition-opacity disabled:opacity-20 active:opacity-70 fade-in"
+          className="w-full h-[52px] font-semibold tracking-wide transition-opacity disabled:opacity-20 active:opacity-70 fade-in mt-6"
           style={{
             backgroundColor: "var(--text)",
             color: "var(--bg)",
