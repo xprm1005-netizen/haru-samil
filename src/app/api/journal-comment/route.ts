@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const STICKER_LABEL: Record<string, string> = {
   great: "잘했어",
   tired: "힘들었어",
@@ -23,6 +21,14 @@ const SYSTEM_PROMPT = `당신은 하루삼일 앱의 조용한 동반자입니�
 - 2~3문장 이내. 한국어로만 응답한다.`;
 
 export async function POST(req: NextRequest) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error("journal-comment error: ANTHROPIC_API_KEY is not set");
+    return NextResponse.json({ error: "서버 설정 오류입니다." }, { status: 500 });
+  }
+
+  const client = new Anthropic({ apiKey });
+
   try {
     const { journal, sticker, daySummary } = await req.json();
 
@@ -44,13 +50,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 200,
-      system: [
-        {
-          type: "text",
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
+      system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userContent }],
     });
 
@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ comment });
   } catch (err) {
-    console.error("journal-comment error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("journal-comment error:", message);
     return NextResponse.json({ error: "AI 멘트를 불러오지 못했습니다." }, { status: 500 });
   }
 }

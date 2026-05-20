@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const SYSTEM_PROMPT = `당신은 하루삼일 앱의 AI 설계사입니다.
 하루삼일은 24시간을 3개의 8시간 블록으로 나누는 앱입니다.
 1일차(시작~+8h)는 하루를 여는 시간, 2일차(+8h~+16h)는 핵심 활동, 3일차(+16h~+24h)는 마무리입니다.
@@ -27,6 +25,17 @@ const SYSTEM_PROMPT = `당신은 하루삼일 앱의 AI 설계사입니다.
 - 한국어로만 응답`;
 
 export async function POST(req: NextRequest) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error("lifestyle-setup error: ANTHROPIC_API_KEY is not set");
+    return NextResponse.json(
+      { error: "서버 설정 오류입니다. 관리자에게 문의해주세요." },
+      { status: 500 }
+    );
+  }
+
+  const client = new Anthropic({ apiKey });
+
   try {
     const { lifestyle, startTime } = await req.json();
 
@@ -35,13 +44,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 600,
-      system: [
-        {
-          type: "text",
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
+      system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userContent }],
     });
 
@@ -50,16 +53,17 @@ export async function POST(req: NextRequest) {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    // extract JSON from response (Claude may wrap in ```json blocks)
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error("lifestyle-setup: no JSON in response:", raw);
       throw new Error("Invalid response format");
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json(parsed);
   } catch (err) {
-    console.error("lifestyle-setup error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("lifestyle-setup error:", message);
     return NextResponse.json(
       { error: "AI 설계에 실패했습니다. 다시 시도해주세요." },
       { status: 500 }
