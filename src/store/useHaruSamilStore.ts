@@ -32,6 +32,7 @@ interface HaruSamilState {
   updateStartTime: (time: string) => void;
   toggleNotifications: () => void;
   completeOnboarding: (startTime: string, firstGoal: string) => void;
+  completeOnboardingWithAiPlan: (startTime: string, plans: { index: DayIndex; goal: string; tasks: string[] }[]) => void;
   resetOnboarding: () => void;
 
   // actions — today
@@ -188,6 +189,49 @@ export const useHaruSamilStore = create<HaruSamilState>((set, get) => {
           showDayOpener: true,
           dayOpenerIsRestart: false,
           lastSeenDayIndex: null,
+        };
+        persistMain(next);
+        return next;
+      });
+    },
+
+    completeOnboardingWithAiPlan(startTime, plans) {
+      set((s) => {
+        const today = todayString();
+        const cycle = createDailyCycle(startTime, today, s.settings.dayRoles);
+
+        // apply AI-designed goals and tasks to all 3 day parts
+        cycle.parts.forEach((p) => {
+          const plan = plans.find((pl) => pl.index === p.index);
+          if (!plan) return;
+          p.goal = plan.goal;
+          p.tasks = plan.tasks
+            .filter((t) => t.trim())
+            .map((t) => ({
+              id: Date.now().toString(36) + Math.random().toString(36).slice(2) + p.index,
+              text: t.trim(),
+              done: false,
+            }));
+        });
+
+        // first part is active
+        cycle.parts[0].status = "active";
+
+        // update recentGoals with AI-designed goals
+        const aiGoals = plans.map((pl) => pl.goal).filter(Boolean);
+        const prev = s.history.recentGoals ?? [];
+        const recentGoals = [...aiGoals, ...prev.filter((g) => !aiGoals.includes(g))].slice(0, 10);
+        const newHistory = { ...bumpDayCount(s.history, today), recentGoals };
+        persistHist(newHistory);
+
+        const next = {
+          ...s,
+          settings: { ...s.settings, startTime, hasCompletedOnboarding: true },
+          cycle,
+          history: newHistory,
+          showDayOpener: true,
+          dayOpenerIsRestart: false,
+          lastSeenDayIndex: null as DayIndex | null,
         };
         persistMain(next);
         return next;

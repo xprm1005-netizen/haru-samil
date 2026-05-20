@@ -5,19 +5,31 @@ import { useRouter } from "next/navigation";
 import ConceptIntro from "@/components/onboarding/ConceptIntro";
 import StartTimePicker from "@/components/onboarding/StartTimePicker";
 import ThreeDaysPreview from "@/components/onboarding/ThreeDaysPreview";
-import FirstGoalSetup from "@/components/onboarding/FirstGoalSetup";
+import LifestyleSetup from "@/components/onboarding/LifestyleSetup";
+import AiPlanResult from "@/components/onboarding/AiPlanResult";
 import { useHaruSamilStore } from "@/store/useHaruSamilStore";
+import { DayIndex } from "@/types";
 
-type Step = "intro" | "time" | "preview" | "goal";
-const STEPS: Step[] = ["intro", "time", "preview", "goal"];
+type Step = "intro" | "time" | "preview" | "lifestyle" | "aiResult";
+const STEPS: Step[] = ["intro", "time", "preview", "lifestyle", "aiResult"];
+
+interface DayPlanItem {
+  index: DayIndex;
+  goal: string;
+  tasks: string[];
+}
 
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("intro");
   const [startTime, setStartTime] = useState("06:00");
-  const completeOnboarding = useHaruSamilStore((s) => s.completeOnboarding);
+  const [lifestyle, setLifestyle] = useState("");
+  const completeOnboardingWithAiPlan = useHaruSamilStore((s) => s.completeOnboardingWithAiPlan);
   const router = useRouter();
 
   const stepIndex = STEPS.indexOf(step);
+
+  // aiResult step should not show back button (AI call already started)
+  const canGoBack = stepIndex > 0 && step !== "aiResult";
 
   return (
     <div
@@ -30,12 +42,12 @@ export default function OnboardingPage() {
           {/* back button */}
           <button
             onClick={() => {
-              if (stepIndex > 0) setStep(STEPS[stepIndex - 1]);
+              if (canGoBack) setStep(STEPS[stepIndex - 1]);
             }}
             className="mono text-[11px] tracking-[0.1em] uppercase transition-opacity active:opacity-50"
             style={{
-              color: stepIndex > 0 ? "var(--text-2)" : "transparent",
-              pointerEvents: stepIndex > 0 ? "auto" : "none",
+              color: canGoBack ? "var(--text-2)" : "transparent",
+              pointerEvents: canGoBack ? "auto" : "none",
             }}
           >
             ← 이전
@@ -65,8 +77,8 @@ export default function OnboardingPage() {
           <div className="w-12" />
         </div>
 
-        {/* content — fade key forces re-animation on step change */}
-        <div key={step} className="flex-1 fade-in">
+        {/* content */}
+        <div key={step} className="flex-1 fade-in overflow-hidden">
           {step === "intro" && (
             <ConceptIntro onNext={() => setStep("time")} />
           )}
@@ -79,13 +91,20 @@ export default function OnboardingPage() {
           {step === "preview" && (
             <ThreeDaysPreview
               startTime={startTime}
-              onNext={() => setStep("goal")}
+              onNext={() => setStep("lifestyle")}
             />
           )}
-          {step === "goal" && (
-            <FirstGoalSetup
-              onDone={(goal) => {
-                completeOnboarding(startTime, goal);
+          {step === "lifestyle" && (
+            <LifestyleSetup
+              onNext={(ls) => { setLifestyle(ls); setStep("aiResult"); }}
+            />
+          )}
+          {step === "aiResult" && (
+            <AiPlanResult
+              lifestyle={lifestyle}
+              startTime={startTime}
+              onConfirm={(plans: DayPlanItem[]) => {
+                completeOnboardingWithAiPlan(startTime, plans);
                 router.push("/");
               }}
             />
