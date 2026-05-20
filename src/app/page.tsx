@@ -9,6 +9,7 @@ import DayHeader from "@/components/today/DayHeader";
 import TimeRemaining from "@/components/today/TimeRemaining";
 import CurrentGoal from "@/components/today/CurrentGoal";
 import TaskList from "@/components/today/TaskList";
+import ShareButton from "@/components/today/ShareButton";
 import PrimaryActions from "@/components/today/PrimaryActions";
 import ThreeDayTimeline from "@/components/today/ThreeDayTimeline";
 import DayOpener from "@/components/today/DayOpener";
@@ -16,6 +17,10 @@ import DaySummary from "@/components/today/DaySummary";
 import CheckInModal from "@/components/modals/CheckInModal";
 import RestartModal from "@/components/modals/RestartModal";
 import BottomNav from "@/components/ui/BottomNav";
+import {
+  registerServiceWorker,
+  scheduleNextDayPartNotification,
+} from "@/lib/notifications";
 
 function timeToMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -65,6 +70,21 @@ export default function TodayPage() {
   useEffect(() => {
     if (cycle) activateCurrent();
   }, []);
+
+  // register SW + schedule next notification on mount
+  useEffect(() => {
+    registerServiceWorker().then((reg) => {
+      if (!reg || !cycle || !settings.notificationsEnabled) return;
+      const parts = cycle.parts;
+      const current = getCurrentDayPart(cycle);
+      if (!current) return;
+      const nextIndex = ((current.index % 3) + 1) as 1 | 2 | 3;
+      const nextPart = parts.find((p) => p.index === nextIndex);
+      if (nextPart) {
+        scheduleNextDayPartNotification(nextIndex, nextPart.startTime);
+      }
+    });
+  }, [cycle, settings.notificationsEnabled]);
 
   useEffect(() => {
     if (!cycle) return;
@@ -132,35 +152,45 @@ export default function TodayPage() {
             />
           </div>
 
-          {/* accumulated identity */}
-          {showAccum && (
-            <div className="flex items-center gap-3 pb-4">
-              <span
-                className="mono text-[10px] tracking-[0.1em]"
-                style={{ color: "var(--text-3)" }}
-              >
-                {history.totalDays}일째
-              </span>
-              <span style={{ color: "var(--text-3)", fontSize: "10px" }}>·</span>
-              <span
-                className="mono text-[10px] tracking-[0.1em]"
-                style={{ color: "var(--text-3)" }}
-              >
-                총 {history.totalDayParts}개의 하루
-              </span>
-              {history.totalRestarts > 0 && (
-                <>
-                  <span style={{ color: "var(--text-3)", fontSize: "10px" }}>·</span>
-                  <span
-                    className="mono text-[10px] tracking-[0.1em]"
-                    style={{ color: "var(--text-3)" }}
-                  >
-                    {history.totalRestarts}번 재시작
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+          {/* accumulated identity + share */}
+          <div className="flex items-center justify-between pb-4">
+            {showAccum ? (
+              <div className="flex items-center gap-3">
+                <span
+                  className="mono text-[10px] tracking-[0.1em]"
+                  style={{ color: "var(--text-3)" }}
+                >
+                  {history.totalDays}일째
+                </span>
+                <span style={{ color: "var(--text-3)", fontSize: "10px" }}>·</span>
+                <span
+                  className="mono text-[10px] tracking-[0.1em]"
+                  style={{ color: "var(--text-3)" }}
+                >
+                  총 {history.totalDayParts}개의 하루
+                </span>
+                {history.totalRestarts > 0 && (
+                  <>
+                    <span style={{ color: "var(--text-3)", fontSize: "10px" }}>·</span>
+                    <span
+                      className="mono text-[10px] tracking-[0.1em]"
+                      style={{ color: "var(--text-3)" }}
+                    >
+                      {history.totalRestarts}번 재시작
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <span />
+            )}
+            <ShareButton
+              dayIndex={currentPart.index}
+              goal={currentPart.goal}
+              timeRange={`${currentPart.startTime} — ${currentPart.endTime}`}
+              totalDays={history.totalDays}
+            />
+          </div>
         </div>
       </div>
 

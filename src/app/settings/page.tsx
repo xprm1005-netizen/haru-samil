@@ -6,6 +6,12 @@ import { addHours } from "@/lib/time/formatTimeRange";
 import { getDeletionCopy } from "@/lib/copy";
 import BottomNav from "@/components/ui/BottomNav";
 import { useRouter } from "next/navigation";
+import {
+  isNotificationSupported,
+  registerServiceWorker,
+  requestNotificationPermission,
+  cancelScheduledNotifications,
+} from "@/lib/notifications";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = ["00", "30"];
@@ -34,6 +40,27 @@ export default function SettingsPage() {
   const [minute, setMinute] = useState(settings.startTime.split(":")[1]);
   const [saved, setSaved]   = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
+  const [notifDenied, setNotifDenied] = useState(false);
+
+  const handleToggleNotifications = async () => {
+    if (settings.notificationsEnabled) {
+      toggleNotifications();
+      cancelScheduledNotifications();
+    } else {
+      if (!isNotificationSupported()) {
+        alert("이 브라우저는 알림을 지원하지 않습니다.");
+        return;
+      }
+      await registerServiceWorker();
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        toggleNotifications();
+        setNotifDenied(false);
+      } else {
+        setNotifDenied(true);
+      }
+    }
+  };
 
   const handleSaveTime = () => {
     updateStartTime(`${hour}:${minute}`);
@@ -141,11 +168,17 @@ export default function SettingsPage() {
             </span>
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
-                <span className="text-[15px]" style={{ color: "var(--text)" }}>하루 시작/종료 알림</span>
-                <span className="mono text-[11px]" style={{ color: "var(--text-3)" }}>MVP에서는 UI only</span>
+                <span className="text-[15px]" style={{ color: "var(--text)" }}>일차 전환 알림</span>
+                <span className="mono text-[11px]" style={{ color: notifDenied ? "var(--danger)" : "var(--text-3)" }}>
+                  {notifDenied
+                    ? "브라우저 설정에서 알림을 허용해주세요"
+                    : settings.notificationsEnabled
+                    ? "다음 일차 시작 시 알림"
+                    : "일차가 바뀔 때 알려드립니다"}
+                </span>
               </div>
               <button
-                onClick={toggleNotifications}
+                onClick={handleToggleNotifications}
                 className="relative transition-all duration-200"
                 style={{
                   width: "44px", height: "26px", borderRadius: "13px",
